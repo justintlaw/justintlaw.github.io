@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yahtzee</title>
+    <link rel="shortcut icon" href="#" />
+</head>
+<body>
+    <!--Container for the sound effects-->
+    <audio id="shakeSound">
+        <source src="diceshake.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="landSound">
+        <source src="dicelanding.mp3" type="audio/mpeg">
+    </audio>
+
+    <!--Div for holding banner-->
+    <div id="banner" class="top-banner">
+        <img src="yahtzee-logo2.png" style="width: 25%">
+    </div>
+    <br><br>
+    <!--Top bar for getting the input-->
+    <div id="topBar" class="top-menu">
+        <label for="userNumber">What number do you want for Yahtzee?</label>
+        <input type="text" id="userNumber" placeholder="Enter 1 through 6" autofocus>
+        <button id="numButton" name="myBtn">Roll Dice</button>
+        <button id="resetButton" onclick="reset()" name="myBtn">Reset</button>
+    </div>
+
+    <br><br>
+    
+    <!--Container for the dice images-->
+    <div id="diceImgs" class="img-container">
+        <div id="animate" class="animate-container">
+            <img src='dice1Use.png' id='diceOneImg' name='diceImg' alt=''/>
+            <img src='dice2Use.png' id='diceTwoImg' name='diceImg' alt=''/>
+            <img src='dice3Use.png' id='diceThreeImg' name='diceImg' alt=''/>
+            <img src='dice4Use.png' id='diceFourImg' name='diceImg' alt=''/>
+            <img src='dice5Use.png' id='diceFiveImg' name='diceImg' alt=''/>
+        </div>
+    </div>
+
+    <br><br>
+
+    <!--Container for the output-->
+    <div id="outputTable" class="output-container">
+        <div id=innerOutputTable class="inner-output-container">
+            <fieldset class="myField">
+                <legend>Dice Roll</legend>
+                <form id="myForm" class="dice-form">
+                    <label for="diceOne">Dice 1 rolls = </label>
+                    <p id="diceOne" name="dice">0</p>
+                    <br>
+                    <label for="diceTwo">Dice 2 rolls = </label>
+                    <p id="diceTwo" name="dice">0</p>
+                    <br>
+                    <label for="diceThree">Dice 3 rolls = </label>
+                    <p id="diceThree" name="dice">0</p>
+                    <br>
+                    <label for="diceFour">Dice 4 rolls = </label>
+                    <p id="diceFour" name="dice">0</p>
+                    <br>
+                    <label for="diceFive">Dice 5 rolls = </label>
+                    <p id="diceFive" name="dice">0</p>
+                    <br>
+                    <label for="totalRolls">Total # of rolls: </label>
+                    <p id="totalRolls"></p>
+                </form>
+            </fieldset>
+        </div>
+    </div>
+
+
+    <!--Styles for all divs-->
+    <style>
+        body
+        {
+            margin: 0;
+            background-color: lightslategray;
+        }
+
+        button
+        {
+            background-color: blue;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            color: white;
+        }
+
+        .top-menu
+        {
+            text-align: center;
+            font-family: 'Courier New Header', Courier, monospace;
+            font-weight: 600;
+            font-size: 24px;
+            color: white;
+        }
+
+        .img-container
+        {
+            text-align: center;
+            position: relative;
+            margin-bottom: 125px;
+        }
+
+        .animate-container
+        {
+            position: absolute;
+        }
+
+        img
+        {
+            width: 7%;
+            padding: 20px;
+        }
+
+        .output-container
+        {
+            margin: auto;
+            margin-bottom: 50px;
+            display: block;
+            text-align: center;
+            padding: 20px;
+
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 600;
+            font-size: 18px;
+            color: white;
+        }
+
+        .inner-output-container
+        {
+            margin: 0;
+            width: 500px;
+            display: inline-block;
+            text-align: left;
+        }
+
+        .dice-form
+        {
+            display: inline-block;
+            text-align: center;
+            font-family: "Rockwell";
+        }
+
+        .dice-form label
+        {
+            text-align: left;
+        }
+
+        .dice-form p
+        {
+            display: inline-block;
+        }
+
+        .myField
+        {
+            text-align: center;
+        }
+
+        .top-banner
+        {
+            text-align: center;
+            background-color: #FE9672;
+            margin: 0;
+        }
+
+        legend
+        {
+            font-size: 30px;
+            font-weight: 800;
+            font-family: 'Courier New', Courier, monospace;
+            text-transform: uppercase;
+            color: black;
+        }
+    </style>
+
+    <!--Script for functions-->
+    <script>
+        //clear storage and set a new key to count if each function is done running
+        sessionStorage.clear();
+        sessionStorage.setItem("completeCount", "0");
+        //add event listeners so that all die roll at once
+        document.getElementById("numButton").addEventListener("click", setUp, false);
+        document.getElementById("numButton").addEventListener("click", playShakeSound, false);
+        document.getElementById("numButton").addEventListener("click", function () { rollDie("diceOneImg", "diceOne")}, false );
+        document.getElementById("numButton").addEventListener("click", function () { rollDie("diceTwoImg", "diceTwo")}, false );
+        document.getElementById("numButton").addEventListener("click", function () { rollDie("diceThreeImg", "diceThree")}, false );
+        document.getElementById("numButton").addEventListener("click", function () { rollDie("diceFourImg", "diceFour")}, false );
+        document.getElementById("numButton").addEventListener("click", function () { rollDie("diceFiveImg", "diceFive")}, false );
+
+        function rollDie(imgID, dieID)
+        {
+            
+            //play shake dice sound first
+            playShakeSound();
+
+            let iTargetNum = parseInt(document.getElementById("userNumber").value);
+            //check if input is valid
+            if (iTargetNum > 0 && iTargetNum < 7 && !isNaN(iTargetNum))
+            {
+                //disable the buttons to prevent errors
+                let myBtns = document.getElementsByName("myBtn");
+                for (let iCount = 0; iCount < myBtns.length; iCount++)
+                {
+                    myBtns[iCount].title = "Disabled while running";
+                    myBtns[iCount].disabled = true;
+                }
+
+                //get pointer to the die image and the number it needs to roll
+                //get pointer to respective p-tag
+                //declare all variables
+                let dieImg = document.getElementById(imgID);
+                let dieNum = document.getElementById(dieID);
+                let iNumRolls = getNumRolls();
+                let iRotate = 0;
+                let iCurrentRotate = 0;
+
+                //array of the images
+                let dieImgs = [];
+                for (let iCount = 1; iCount <= 6; iCount++)
+                {
+                    dieImgs.push('dice' + iCount + 'Use.png');
+                }
+
+                //clear the p-tag and set status to "Rolling"
+                dieNum.innerHTML = "Rolling...";
+
+                //spin until number of spins equals number or rolls
+                iRotate = 360 * iNumRolls;
+                let id = setInterval(frame, 1);
+
+                function frame()
+                {
+                    //if one rotation but not the last one, change die number to a number not equal to target
+                    if (iCurrentRotate > 0 && iCurrentRotate % 360 == 0 && iCurrentRotate != iRotate)
+                    {
+                        //update the img
+                        dieImg.src = changeImg(iTargetNum - 1);
+                    }
+
+                    //start the landing sound effect before the dice lands to sync the sound better
+                    //make sure conditional check is multiple of 4 (or whatever iCurrentRotate is incremented by)
+                    if ((iCurrentRotate + 80) == iRotate)
+                    {
+                        document.getElementById("landSound").play();
+                    }
+
+                    //if full rotation, stop the function
+                    //update p-tag and img after die lands
+                    if (iCurrentRotate == iRotate)
+                    {
+                        dieNum.innerHTML = "" + iNumRolls;
+                        dieImg.src = dieImgs[iTargetNum - 1];
+                        let totalRolls = document.getElementById("totalRolls");
+                        let iTotal = parseInt(totalRolls.innerHTML);
+
+                        if(isNaN(iTotal))
+                        {
+                            totalRolls.innerHTML = "" + iNumRolls;
+                        }
+                        else
+                        {
+                            totalRolls.innerHTML = "" + (parseInt(totalRolls.innerHTML) + iNumRolls);
+                        }
+
+                        //update the function complete counter, or enable buttons if this is the last function to execute
+                        let sHoldCounter = sessionStorage.getItem("completeCount");
+                        sHoldCounter = '' + (parseInt(sHoldCounter) + 1);
+                        if (sHoldCounter == "5")
+                        {
+                            //enable buttons
+                            let myBtns = document.getElementsByName("myBtn");
+                            for (let iCount = 0; iCount < myBtns.length; iCount++)
+                            {
+                                myBtns[iCount].title = "";
+                                myBtns[iCount].disabled = false;
+                            }
+                        }
+                        else
+                        {
+                            sessionStorage.removeItem("completeCount");
+                            sessionStorage.setItem("completeCount", sHoldCounter);
+                        }
+
+                        clearInterval(id);
+                    }
+                    //otherwise rotate by 4 degrees
+                    else
+                    {   
+                        iCurrentRotate += 4;
+                        dieImg.style.transform = 'rotate(' + iCurrentRotate + 'deg)';
+                    }
+                }          
+            }  
+        }
+
+        //get the number of rolls for one die
+        function getNumRolls()
+        {
+            let iTargetNum = parseInt(document.getElementById("userNumber").value);
+            let iNumRolls = 0;
+            let iCurrentRoll = 0;
+
+            //get the number of rolls
+            do
+            {
+                iCurrentRoll = Math.floor(Math.random() * 6) + 1;
+                iNumRolls++;
+            }
+            while (iCurrentRoll != iTargetNum);
+
+            return iNumRolls;
+        }
+
+        //reset total and the die and check if input is valid
+        function setUp()
+        {
+            let myDice = document.getElementsByName("diceImg");
+            let iMax = myDice.length;
+            let iCount = 0;
+
+            sessionStorage.clear();
+            sessionStorage.setItem("completeCount", "0");
+
+            //check if valid input
+            let myInput = document.getElementById("userNumber");
+            let iTargetNum = parseInt(document.getElementById("userNumber").value);
+
+            if (iTargetNum < 1 || iTargetNum > 6 || isNaN(iTargetNum))
+            {
+                myInput.style.backgroundColor = "#ffdddd";
+                myInput.value = "";
+                myInput.focus();
+
+                //enable buttons
+                let myBtns = document.getElementsByName("myBtn");
+                for (let iCount = 0; iCount < myBtns.length; iCount++)
+                {
+                    myBtns[iCount].title = "";
+                    myBtns[iCount].disabled = false;
+                }
+                alert("Invalid input");
+            }
+            else
+            {
+                myInput.style.backgroundColor = "white";
+                //reset die images to default
+                resetDie();
+            }
+        }
+
+        function playShakeSound()
+        {
+            //Don't play the sound if the input is invalid
+            let myInput = document.getElementById("userNumber");
+            let iTargetNum = parseInt(document.getElementById("userNumber").value);
+
+            if (!(iTargetNum < 1 || iTargetNum > 6 || isNaN(iTargetNum)))
+            {
+                document.getElementById("shakeSound").play();
+            }
+        }
+
+        //default function for reset button
+        function reset()
+        {
+            let myInput = document.getElementById("userNumber");
+            let myTotal = document.getElementById("totalRolls");
+
+            myInput.value = "";
+            myTotal.value = "";
+
+            resetDie();
+            myInput.focus();
+        }
+
+        //reset the die images and text field
+        function resetDie()
+        {
+            let myDice = document.getElementsByName("diceImg");
+            let myNums = document.getElementsByName("dice");
+
+            for (iCount = 0; iCount < myDice.length; iCount++)
+            {
+                myDice[iCount].src = 'dice' + (iCount + 1) + 'Use.png';
+            }
+            for (iCount = 0; iCount < myNums.length; iCount++)
+            {
+                myNums[iCount].innerHTML = "0";
+            }
+            document.getElementById("totalRolls").innerHTML = "";
+        }
+
+        //changes image with parameter of img number (index) that is NOT acceptable
+        function changeImg(iAvoidIndex)
+        {
+            //declare default image variable and initialize
+            let mySources = [];
+            let iNum = 0;
+
+            for (let iCount = 0; iCount < 6; iCount++)
+            {
+                mySources.push('dice' + (iCount + 1) + 'Use.png');
+            }
+
+            //generate a random num after removing the die num to avoid
+            mySources.splice(iAvoidIndex, 1);
+            iNum = Math.floor(Math.random() * 5);
+
+            //return the new image source
+            return mySources[iNum];
+        }
+    </script>
+</body>
+</html>
